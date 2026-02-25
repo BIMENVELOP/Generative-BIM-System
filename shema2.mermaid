@@ -1,0 +1,49 @@
+graph TD
+    %% Определение стилей для блоков
+    classDef input fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef bimmodel fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    classDef gnndual fill:#d1c4e9,stroke:#311b92,stroke-width:2px;
+    classDef generator fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px;
+    classDef discriminator fill:#ffcdd2,stroke:#b71c1c,stroke-width:2px;
+    classDef output fill:#ffe0b2,stroke:#bf360c,stroke-width:2px;
+
+    subgraph Input_Data [Входные данные]
+        A1["Параметры проекта<br/>(этажность, площадь, назначение)"]:::input
+        A2["BIM-модель / IFC-файл<br/>(прототип или пустой шаблон)"]:::input
+    end
+
+    subgraph BIM_Processing [Модуль парсинга BIM]
+        B["Двойное кодирование<br/>(IFC.js / Forge API)"]:::bimmodel
+        B --> C1["Grid-based представление<br/>(изображения/воксели)"]:::bimmodel
+        B --> C2["Graph-based представление<br/>(Neo4j / PyG)"]:::gnndual
+    end
+
+    Input_Data --> B
+
+    subgraph Hybrid_Generator [Гибридный Генератор]
+        direction TB
+        C1 --> D["U-Net (CNN) <br/> Генерация текстур/форм"]:::generator
+        
+        C2 --> E["Graph Attention Network (GAT) <br/> Анализ топологии"]:::gnndual
+        
+        D --> F["Механизм Cross-Modal Attention<br/>(Согласование признаков)"]:::gnndual
+        E --> F
+        
+        F --> G["Декодер<br/>(Формирование итоговой модели)"]:::generator
+    end
+
+    subgraph Discriminator_Block [Дискриминатор]
+        H["PatchGAN + Graph Matching<br/>(Оценка реалистичности и структуры)"]:::discriminator
+    end
+
+    subgraph Output_Block [Выход]
+        I["Готовая планировка/фасад<br/>(BIM-совместимый формат)"]:::output
+    end
+
+    %% Связи
+    C2 -.-> H
+    G --> H
+    G --> I
+
+    %% Подпись
+    H -- "Потери (Adversarial + Graph Matching)" --> G

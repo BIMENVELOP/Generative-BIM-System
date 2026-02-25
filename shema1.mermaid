@@ -1,0 +1,32 @@
+graph TD
+    classDef cnnblock fill:#c8e6c9,stroke:#1b5e20,stroke-width:1px;
+    classDef gnnblock fill:#d1c4e9,stroke:#311b92,stroke-width:1px;
+    classDef attention fill:#ffecb3,stroke:#ff6f00,stroke-width:2px;
+
+    subgraph Features [Извлечение признаков]
+        CNN_Feat["Признаки от U-Net<br/>(Карты объектов: 'похоже на стену')"]:::cnnblock
+        GNN_Feat["Признаки от GNN<br/>(Векторы узлов: 'стена соединена с полом')"]:::gnnblock
+    end
+
+    subgraph CrossModal [Cross-Modal Attention]
+        Attention1["Запрос (Query) от GNN:<br/>'Какие визуальные признаки у моих соседей?'"]:::attention
+        Attention2["Ключи (Keys) от CNN:<br/>'Вот карта визуальных признаков'"]:::attention
+        Attention3["Значения (Values) от CNN:<br/>'Вот конкретные пиксели стены'"]:::attention
+        
+        Attention1 --> Attention4["Скалярное произведение<br/>Q * K"]:::attention
+        Attention2 --> Attention4
+        Attention4 --> Attention5["Softmax<br/>(Веса внимания)"]:::attention
+        Attention5 --> Attention6["Взвешенная сумма V"]:::attention
+        Attention3 --> Attention6
+    end
+
+    subgraph OutputFusion [Результат]
+        Fused["Обогащенный вектор узла<br/>(Топология + Геометрия)"]:::gnnblock
+    end
+
+    CNN_Feat --> Attention2
+    CNN_Feat --> Attention3
+    GNN_Feat --> Attention1
+    Attention6 --> Fused
+
+    style CrossModal fill:#fff9e6,stroke:#ffb300,stroke-width:2px
